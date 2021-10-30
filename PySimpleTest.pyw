@@ -280,8 +280,8 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
     # ----- Full layout -----
 
     layout = [[sg.Image(data=icon, background_color='white'), sg.Text('PySimpleTest - Simple Python Testing', font='Any 20')],
-              [sg.T('Testing Using Interpreter: ' + sg.user_settings_get_entry('-current interpreter-', ''), font='Default 12', ),
-               sg.T('Interpreter path: ' + sg.user_settings_get_entry('-interpreter path-', ''), font='Default 12')],
+              [sg.T('Testing Using Interpreter: ' + sg.user_settings_get_entry('-current interpreter-', ''), font='Default 12', k='-CURRENT INTERPRETER-'),
+               sg.T('Interpreter path: ' + sg.user_settings_get_entry('-interpreter path-', ''), font='Default 12', k='-INTERPRETER PATH-')],
               [choose_folder_at_top, choose_interpreter_at_top],
               # [sg.Column([[left_col],[ lef_col_find_re]], element_justification='l',  expand_x=True, expand_y=True), sg.Column(right_col, element_justification='c', expand_x=True, expand_y=True)],
               [sg.Pane([sg.Column([[left_col]], element_justification='l',  expand_x=True, expand_y=True), sg.Column(right_col, element_justification='c', expand_x=True, expand_y=True) ], orientation='h', relief=sg.RELIEF_SUNKEN, k='-PANE-', expand_x=True, expand_y=True), sg.Sizegrip()],
@@ -325,13 +325,8 @@ def the_thread(window: sg.Window, sp: subprocess.Popen):
     """
 
     window.write_event_value('-THREAD-', (sp, '===THEAD STARTING==='))
-    window.write_event_value('-THREAD-', (sp, '----- STDOUT Follows ----'))
+    window.write_event_value('-THREAD-', (sp, '----- STDOUT & STDERR Follows ----'))
     for line in sp.stdout:
-        oline = line.decode().rstrip()
-        window.write_event_value('-THREAD-', (sp, oline))
-    window.write_event_value('-THREAD-', (sp, '----- STDERR ----'))
-
-    for line in sp.stderr:
         oline = line.decode().rstrip()
         window.write_event_value('-THREAD-', (sp, oline))
     window.write_event_value('-THREAD-', (sp, '===THEAD DONE==='))
@@ -446,6 +441,12 @@ def main():
             window['-FILTER NUMBER-'].update(f'{len(file_list)} files')
             window['-ML-'].update('')
             window['-FILTER-'].update('')
+        elif event == '-INTERPRETER TOP-':
+            interpreter_path = sg.user_settings_get_entry(interpreter_dict[values['-INTERPRETER TOP-']])
+            sg.user_settings_set_entry('-current interpreter-', values['-INTERPRETER TOP-'])
+            sg.user_settings_set_entry('-interpreter path-', interpreter_path)
+            window['-CURRENT INTERPRETER-'].update('Testing Using Interpreter: ' + sg.user_settings_get_entry('-current interpreter-', ''))
+            window['-INTERPRETER PATH-'].update('Interpreter path: ' + sg.user_settings_get_entry('-interpreter path-', ''))
         elif event == 'Edit':
             for file in values['-DEMO LIST-']:
                 sg.cprint('EDITING: ', c='white on green')
