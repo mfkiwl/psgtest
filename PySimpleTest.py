@@ -1,20 +1,10 @@
 import os.path
 import sys
-import webbrowser
 import threading
 import subprocess
 import PySimpleGUI as sg
-# import PySimpleGUIQt as sgqt
-import urllib
-# try:
-#     from PySimpleGUIQt import framework_version
-#     from PySimpleGUIQt import ver as PySimpleGUIQt_ver
-# except:
-#     framework_version = ver = 'Unable to import the version from PySimpleGUIQt'
-framework_version = sg.ver
-PySimpleGUIQt_ver  = '1.0.0'
 
-__version__ = '1.1'
+__version__ = '1.2'
 
 """
 
@@ -33,202 +23,6 @@ __version__ = '1.1'
 
 
 DEFAULT_OUTPUT_SIZE = (140,30)
-DEFAULT_REPO =  r'https://github.com/PySimpleGUI/PySimpleGUIQt2'
-
-'''
-M""MMMMMMMM                                        
-M  MMMMMMMM                                        
-M  MMMMMMMM .d8888b. .d8888b.    .d8888b. 88d888b. 
-M  MMMMMMMM 88'  `88 88'  `88    88'  `88 88'  `88 
-M  MMMMMMMM 88.  .88 88.  .88    88.  .88 88    88 
-M         M `88888P' `8888P88    `88888P8 dP    dP 
-MMMMMMMMMMM               .88                      
-                      d8888P                       
-M""M                                     
-M  M                                     
-M  M .d8888b. .d8888b. dP    dP .d8888b. 
-M  M Y8ooooo. Y8ooooo. 88    88 88ooood8 
-M  M       88       88 88.  .88 88.  ... 
-M  M `88888P' `88888P' `88888P' `88888P' 
-MMMM
-'''
-
-def github_issue_post_make_github_link(title, body):
-    pysimplegui_url = sg.user_settings_get_entry('-github repo-', '')
-    pysimplegui_issues = "{}/issues/new?".format(pysimplegui_url)
-
-    # Fix body cuz urllib can't do it smfh
-    getVars = {'title': str(title), 'body': str(body)}
-    return (pysimplegui_issues + urllib.parse.urlencode(getVars).replace("%5Cn", "%0D"))
-
-
-def github_issue_post_make_markdown(issue_type, operating_system, os_ver, psg_port, psg_ver, gui_ver, python_ver,
-                                     detailed_desc, code, ):
-    body = \
-"""
-### Type of Issue (Enhancement, Error, Bug, Question)
-
-{}
-----------------------------------------
-
-#### Operating System
-
-{}  version {}
-
-#### PySimpleGUIQt Port
-
-{}
-
-----------------------------------------
-
-## Versions
-
-#### Python version
-
-{}
-
-#### PySimpleGUIQt Version
-
-{}
-
-#### PySide2 Version
-
-{}
-
-""".format(issue_type, operating_system,os_ver, psg_port,python_ver, psg_ver, gui_ver)
-
-    body2 = \
-"""
-
-
-#### Detailed Description
-
-{}
-
-#### Code To Duplicate
-
-
-```python
-{}
-
-
-```
-
-#### Screenshot, Sketch, or Drawing
-
-
-
-    """.format(detailed_desc, code if len(code) > 10 else '# Paste your code here')
-
-    return body + body2
-
-def main_open_github_issue():
-    font_frame = '_ 14'
-    issue_types = ('Question', 'Bug', 'Enhancement', 'Error Message')
-    frame_type = [[sg.Radio(t, 1, size=(10,1), enable_events=True, k=t)] for t in issue_types]
-
-    v_size = (15,1)
-    frame_versions = [[sg.T('Python', size=v_size), sg.In(sys.version, size=(20,1), k='-VER PYTHON-')],
-                      [sg.T('PySimpleGUIQt', size=v_size), sg.In(PySimpleGUIQt_ver, size=(20,1), k='-VER PSG-')],
-                      [sg.T('PySide2', size=v_size), sg.In(framework_version, size=(20,1), k='-VER QT-')]]
-
-    frame_platforms = [ [sg.T('OS                 '), sg.T('Details')],
-                        [sg.Radio('Windows', 2, sg.running_windows(), size=(8,1), k='-OS WIN-'), sg.In(size=(8,1),k='-OS WIN VER-')],
-                        [sg.Radio('Linux', 2,sg.running_linux(), size=(8,1), k='-OS LINUX-'), sg.In(size=(8,1),k='-OS LINUX VER-')],
-                        [sg.Radio('Mac', 2, sg.running_mac(), size=(8,1), k='-OS MAC-'), sg.In(size=(8,1),k='-OS MAC VER-')],
-                        [sg.Radio('Other', 2, size=(8,1), k='-OS OTHER-'), sg.In(size=(8,1),k='-OS OTHER VER-')]]
-
-
-    frame_details = [[sg.Multiline(size=(65,10), font='Courier 10', k='-ML DETAILS-')]]
-    frame_code = [[sg.Multiline(size=(80,10), font='Courier 8',  k='-ML CODE-')]]
-    frame_markdown = [[sg.Multiline(size=(80,10), font='Courier 8',  k='-ML MARKDOWN-')]]
-
-    top_layout = [  [sg.Col([[sg.Text('Open A GitHub Issue (* = Required Info)', font='_ 15')]], expand_x=True),],
-                    [sg.Frame('Title *', [[sg.Input(k='-TITLE-', size=(50,1), font='_ 14', focus=True)]], font=font_frame)],
-                        sg.vtop([
-                            sg.Frame('Platform *',frame_platforms, font=font_frame),
-                            sg.Frame('Type of Issue *',frame_type, font=font_frame),
-                            sg.Frame('Versions *',frame_versions, font=font_frame),
-                            ])]
-
-    middle_layout = [[sg.HorizontalSeparator()],
-                     [sg.T(sg.SYMBOL_DOWN + ' If you need more room for details grab the dot and drag to expand', background_color='red', text_color='white')]]
-
-    bottom_layout = [[sg.TabGroup([[sg.Tab('Details *', frame_details, pad=(0,0)), sg.Tab('SHORT Code to duplicate Program *', frame_code, pad=(0,0)), sg.Tab('Markdown Output', frame_markdown, pad=(0,0))]], k='-TABGROUP-', tab_location='topleft'),
-                      ]]
-
-    layout_pane = sg.Pane([sg.Col(middle_layout), sg.Col(bottom_layout)], key='-PANE-')
-
-    layout = [
-        [sg.pin(sg.B(sg.SYMBOL_DOWN, pad=(0, 0), k='-HIDE CLIST-', tooltip='Hide/show upper sections of window')), sg.pin(sg.Col(top_layout, k='-TOP COL-'))],
-        [layout_pane],
-              [sg.Col([[sg.B('Post Issue'), sg.B('Create Markdown Only'), sg.B('Quit')]], expand_x=False, expand_y=False)]]
-
-    window = sg.Window('Open A GitHub Issue', layout, finalize=True, resizable=True, enable_close_attempted_event=True, margins=(0,0))
-
-    window['-TABGROUP-'].expand(True, True, True)
-    window['-ML CODE-'].expand(True, True, True)
-    window['-ML DETAILS-'].expand(True, True, True)
-    window['-ML MARKDOWN-'].expand(True, True, True)
-    window['-PANE-'].expand(True, True, True)
-    window.bring_to_front()
-
-    while True:             # Event Loop
-        event, values = window.read()
-        # print(event, values)
-        if event in (sg.WINDOW_CLOSE_ATTEMPTED_EVENT, 'Quit'):
-            if sg.popup_yes_no( 'Do you really want to exit?',
-                                'If you have not clicked Post Issue button and then clicked "Submit New Issue" button '
-                                'then your issue will not have been submitted to GitHub.\n'
-                                'If you are having trouble with PySimpleGUI opening your browser, consider generating '
-                                'the markdown, copying it to a text file, and then using it later to manually paste into a new issue '
-                                '\n'
-                                'Are you sure you want to quit?',
-                                image=sg.EMOJI_BASE64_PONDER,
-                                ) == 'Yes':
-                break
-        if event == sg.WIN_CLOSED:
-            break
-        if event in issue_types:
-            title = str(values['-TITLE-'])
-            if len(title) != 0:
-                if title[0] == '[' and title.find(']'):
-                    title = title[title.find(']')+1:]
-                    title = title.strip()
-            window['-TITLE-'].update('[{}] {}'.format(event, title))
-        if event == '-HIDE CLIST-':
-            window['-TOP COL-'].update(visible=not window['-TOP COL-'].visible)
-            window['-HIDE CLIST-'].update(text=sg.SYMBOL_UP if window['-HIDE CLIST-'].get_text() == sg.SYMBOL_DOWN else sg.SYMBOL_DOWN)
-        elif event in ('Post Issue', 'Create Markdown Only'):
-            issue_type = None
-            for itype in issue_types:
-                if values[itype]:
-                    issue_type = itype
-                    break
-            if values['-OS WIN-']:
-                operating_system = 'Windows'
-                os_ver = values['-OS WIN VER-']
-            elif values['-OS LINUX-']:
-                operating_system = 'Linux'
-                os_ver = values['-OS LINUX VER-']
-            elif values['-OS MAC-']:
-                operating_system = 'Mac'
-                os_ver = values['-OS MAC VER-']
-            elif values['-OS OTHER-']:
-                operating_system = 'Other'
-                os_ver = values['-OS OTHER VER-']
-            else:
-                sg.popup_error('Must choose Operating System')
-                continue
-            markdown = github_issue_post_make_markdown(issue_type, operating_system, os_ver, 'PySimpleGUIQt', values['-VER PSG-'], values['-VER QT-'], values['-VER PYTHON-'], values['-ML DETAILS-'], values['-ML CODE-'])
-            window['-ML MARKDOWN-'].update(markdown)
-            link = github_issue_post_make_github_link(values['-TITLE-'], window['-ML MARKDOWN-'].get())
-            if event == 'Post Issue':
-                webbrowser.open_new_tab(link)
-            else:
-                sg.popup('Your markdown code is in the Markdown tab', keep_on_top=True)
-
-    window.close()
 
 
 '''
@@ -356,9 +150,6 @@ def settings_window():
               [sg.Frame('Text Output Settings', [[sg.T('Font and size (e.g. Courier 10) for the output:'), sg.In(sg.user_settings_get_entry('-output font-', 'Courier 10'), k='-MLINE FONT-', s=(15,1))],
                                                 [sg.T('Output size Width x Height in chars'), sg.In(sg.user_settings_get_entry('-output width-', DEFAULT_OUTPUT_SIZE[0]), k='-MLINE WIDTH-', s=(4,1)), sg.T(' x '), sg.In(sg.user_settings_get_entry('-output height-', DEFAULT_OUTPUT_SIZE[1]), k='-MLINE HEIGHT-', s=(4,1))]], font='_ 14')],
 
-              [sg.Frame('GitHub Repo', [[sg.T('Repo to file issues in:'),
-                                                  sg.In(sg.user_settings_get_entry('-github repo-', DEFAULT_REPO), k='-GITHUB REPO-', s=(55, 1))]], font='_ 14')],
-
 
               [sg.Frame('Double-click Will...', [[sg.R('Run', 2, sg.user_settings_get_entry('-dclick runs-', False), k='-DCLICK RUNS-'),
                                                   sg.R('Edit', 2, sg.user_settings_get_entry('-dclick edits-', False), k='-DCLICK EDITS-'),
@@ -392,7 +183,6 @@ def settings_window():
             sg.user_settings_set_entry('-output font-', values['-MLINE FONT-'])
             sg.user_settings_set_entry('-output width-', values['-MLINE WIDTH-'])
             sg.user_settings_set_entry('-output height-', values['-MLINE HEIGHT-'])
-            sg.user_settings_set_entry('-github repo-', values['-GITHUB REPO-'])
             sg.user_settings_set_entry('-current interpreter-', *[k for k in interpreter_dict if values[interpreter_dict[k]+'-RADIO-']])
             sg.user_settings_set_entry('-interpreter path-', values[interpreter_dict[sg.user_settings_get_entry('-current interpreter-')]])
             settings_changed = True
@@ -416,7 +206,7 @@ MMMMMMMMMMMMMM                               MMMMMMMMMM
 '''
 
 def make_output_tab(tab_text, key, tab_key):
-    tab = sg.Tab(tab_text, [[sg.Multiline(size=(sg.user_settings_get_entry('-output width-', DEFAULT_OUTPUT_SIZE[0]), sg.user_settings_get_entry('-output height-', DEFAULT_OUTPUT_SIZE[1])), expand_x=True, expand_y=True, write_only=True, key=key,  auto_refresh=True, font=sg.user_settings_get_entry('-output font-', 'Courier 10')),],[ sg.B('Copy To Clipboard', k=('-COPY-', key)), sg.B('Clear', k=('-CLEAR-', key))]], right_click_menu=sg.MENU_RIGHT_CLICK_EDITME_EXIT, k=tab_key)
+    tab = sg.Tab(tab_text, [[sg.Multiline(size=(sg.user_settings_get_entry('-output width-', DEFAULT_OUTPUT_SIZE[0]), sg.user_settings_get_entry('-output height-', DEFAULT_OUTPUT_SIZE[1])), expand_x=True, expand_y=True, write_only=True, key=key,  auto_refresh=True, font=sg.user_settings_get_entry('-output font-', 'Courier 10')),],[ sg.B('Copy To Clipboard', k=('-COPY-', key)), sg.B('Clear', k=('-CLEAR-', key))]], right_click_menu=sg.MENU_RIGHT_CLICK_EDITME_VER_LOC_EXIT, k=tab_key)
 
     return tab
 
@@ -468,7 +258,7 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
         [sg.B('Copy To Clipboard', key=('-COPY-', '-ML-')), sg.B('Clear', k=('-CLEAR-', '-ML-'))]]
 
     bottom_right = [
-        [sg.B('Open GitHub Issue'), sg.Button('Edit Me (this program)'), sg.B('Settings'), sg.Button('Exit')],
+        [sg.Button('Edit Me (this program)'), sg.B('Settings'), sg.Button('Exit')],
         [sg.T('PySimpleGUI ver ' + sg.version.split(' ')[0] + '  tkinter ver ' + sg.tclversion_detailed, font='Default 8', pad=(0,0))],
         [sg.T('Python ver ' + sys.version, font='Default 8', pad=(0,0))]]
 
@@ -499,16 +289,9 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
               ]
 
     # --------------------------------- Create Window ---------------------------------
-    window = sg.Window('PySimpleTest', layout, finalize=True, resizable=True, use_default_focus=False, right_click_menu=sg.MENU_RIGHT_CLICK_EDITME_VER_SETTINGS_EXIT)
+    window = sg.Window('PySimpleTest', layout, finalize=True, resizable=True, use_default_focus=False, right_click_menu=sg.MENU_RIGHT_CLICK_EDITME_VER_LOC_EXIT)
     # window.set_min_size(window.size)
 
-    # window['-TAB1-'].expand(True, True, True)
-    # window['-DEMO LIST-'].expand(True, True, True)
-    # window['-ML-'].expand(True, True, True)
-    # window['-PANE-'].expand(True, True, True)
-
-
-    # window['-TABGROUP-'].expand(True, True, True)
 
     # Rebild the dynamically created tabs
     if sp_to_mline_dict is not None:
@@ -618,7 +401,7 @@ def main():
                     file_to_run = str(file_list_dict[file])
                     sg.cprint(file_to_run,text_color='white', background_color='purple')
                     pipe_output = values['-SHOW OUTPUT-']
-                    sp = sg.execute_command_subprocess(interpreter_path, file_to_run, pipe_output=pipe_output)
+                    sp = sg.execute_command_subprocess(interpreter_path, f'"{file_to_run}"', pipe_output=pipe_output)
                     sp_to_filename[sp] = file
                     mline_key = f'{file}-MLINE-'
                     if mline_key not in sp_to_mline_dict.values():
@@ -635,7 +418,6 @@ def main():
             sg.execute_editor(__file__)
         elif event == 'Version':
             sg.cprint(sg.get_versions(), c='white on green')
-            sg.Print(sg.get_versions(), c='white on green')
         elif event == '-FILTER-':
             new_list = [i for i in file_list if values['-FILTER-'].lower() in i.lower()]
             window['-DEMO LIST-'].update(new_list)
@@ -669,9 +451,13 @@ def main():
                 sg.cprint('EDITING: ', c='white on green')
                 sg.cprint(f'{file_list_dict[file]}', c='white on purple')
                 sg.execute_editor(file_list_dict[file])
-        elif event == 'Open GitHub Issue':
-            main_open_github_issue()
-
+        elif event == 'Version':
+            sg.cprint(sg.get_versions(), c='white on green')
+            sg.popup_scrolled(sg.get_versions(), non_blocking=True)
+        elif event == 'Edit Me':
+            sg.execute_editor(__file__)
+        elif event == 'File Location':
+            sg.cprint('This Python file is:', __file__, c='white on green')
     window.close()
 
 
