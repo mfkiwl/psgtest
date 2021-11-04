@@ -28,7 +28,10 @@ pip install psgtest
 
 ## Usage
 
+Once pip installed, you can launch psgtest by typing on the command line:  
 `psgtest`
+
+You can also create a Windows shortcut by following the instructions below.
 
 ## About
 
@@ -64,6 +67,14 @@ Use the `Copy To Clipboard` button to copy the contents of the output to the cli
 Use the `Clear` button to delete the output.
 
 The `Close Tab` button closes the tab as does the right click menu item `Close`.  If you run the program again after closing the tab, the old contents of the tab are retained and shown when the tab is "re-opened".  (See the GIF above for an example)
+
+## Make a Windows Shortcut
+
+If you're running Windows, then you can use `psgshortcut` to make a shortcut to the .pyw file (if you download psgtest from GitHub) or the .py file (if you pip installed).  The icon for `psgtest` is in this repo and is also included when you pip install psgtest.  It's in the same folder as the gui.py file.  
+
+You can find the location of psgtest after pip installing it by running psgtest, right clicking, and choosing "File Location".  You'll be shown where the `gui.py` file is located (the name of the psgtest program when pip installed).  It will usually be located in the `site-packages` folder in a folder named  `psgtest`.
+
+Instructions on how to make shortcuts to pip installed PySimpleGUI programs can be found in [description for psgshortcut on PyPI](https://pypi.org/project/psgshortcut/).
 
 ## License
 
