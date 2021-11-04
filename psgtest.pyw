@@ -4,7 +4,6 @@ import threading
 import subprocess
 import PySimpleGUI as sg
 
-__version__ = '1.2'
 
 """
 
@@ -22,7 +21,7 @@ __version__ = '1.2'
 """
 
 
-DEFAULT_OUTPUT_SIZE = (140,30)
+DEFAULT_OUTPUT_SIZE = (80,5)
 
 
 '''
@@ -206,7 +205,7 @@ MMMMMMMMMMMMMM                               MMMMMMMMMM
 '''
 
 def make_output_tab(tab_text, key, tab_key):
-    tab = sg.Tab(tab_text, [[sg.Multiline(size=(sg.user_settings_get_entry('-output width-', DEFAULT_OUTPUT_SIZE[0]), sg.user_settings_get_entry('-output height-', DEFAULT_OUTPUT_SIZE[1])), expand_x=True, expand_y=True, write_only=True, key=key,  auto_refresh=True, font=sg.user_settings_get_entry('-output font-', 'Courier 10')),],[ sg.B('Copy To Clipboard', k=('-COPY-', key)), sg.B('Clear', k=('-CLEAR-', key))]], right_click_menu=sg.MENU_RIGHT_CLICK_EDITME_VER_LOC_EXIT, k=tab_key)
+    tab = sg.Tab(tab_text, [[sg.Multiline(size=(sg.user_settings_get_entry('-output width-', DEFAULT_OUTPUT_SIZE[0]), sg.user_settings_get_entry('-output height-', DEFAULT_OUTPUT_SIZE[1])), expand_x=True, expand_y=True, write_only=True, key=key,  auto_refresh=True, font=sg.user_settings_get_entry('-output font-', 'Courier 10')),],[ sg.B('Copy To Clipboard', k=('-COPY-', key)), sg.B('Clear', k=('-CLEAR-', key)), sg.B('Close Tab', k=('-CLOSE-', tab_key))]], right_click_menu=['', [f'Close::{tab_key}', 'Exit']], k=tab_key,  )
 
     return tab
 
@@ -234,6 +233,8 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
     :return: The main window object
     :rtype: (sg.Window)
     """
+    icon = b'iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAADv0lEQVRogd2Zy0tVQRzHP1bkDa1NtCgtolQIKwlcCJYtFRRsX0S7+gPS9tqDFlmLHhi1lhSF8LHQDKQnLYOgiMRF5SbBV6SW3Ra/3+mcbuece+aeOcfsC8O5zuM739/M/GZ+M0I6KAf6gHlN/UBlSn1bQzkwA2Rz0gxQtoa6jNGHCB9EhJcBQ5r3YA11GWMeEe0d/d2aN2urkw22iELwXb9FPmU/UujfGnqQ0R9C/KUcGNa8njXU9RdG+duRTdOTuCL8ptsUWQscEFPLJksioHAhVgYiDWdPBTZnxNYSKwg2ZuSpBY7Yzm4Tzg6UVP1Q/Dc+kqQh6zbi9S6VKBGv1aVlE15hUSLedWFIlIh3XTi7I9BGCJQ6vCPcT3DE2+dT/59BIyJqSv+uAr7g7+wVWmdK8xpTVRqCDPAWEdXuyS9DHHtOUx+uEWjdrLbNpKI0Dy4igt4BxQbtNgNvtG1nArqMcARYAX4CDQW0b9C2K8q1JigGXiMj2h2Dp1s5XmM2o9ZwRQVMAltj8JQA75XrsgVdRqhDXkBWgeMW+Oo9fEct8EVCBtdJr1nk7cLdxbZY5A3EDeK/muRL15M2ogGZ/qQNWaWwXTASMshZkQWuJtWJcjvnUiIH5eWkO1AU4/rgRdvkNcihFbSrHAJGgGVNw0B1jP6OaV8rwOEYPH9gA/AKGaGbPuWHcO8f3jRHPGNuKc9LLF0HzijhR/wPvhEtH0WCwgpgDDeMLxTbgE/KczoGDwClwGclO+lTXgQsafl+T36F5n0j3mieUp5PqqVgXFKiZwGCvIZ4Q/RKgg1pAcaBRWBBfzcH9F8EPFeuSwVZAOwAviJOVxtSz7n5jSEGVAKPcB8fvHBCfr8UFMrXqoavqskYHdrBQJ561Yhj5wqbBQ546rVo/hJwHtipqQ13VoNmZkDLO0yNKMV9l6qPUL8acewlZDkN5hgB8Fj5zvu0d26L4wH89bhX5ZIIen7jnDZ8YdIoD5wteqdP2S4tmw9p/0LrnPUrDHoOatXvvWgaU8F9/baG1srBNGL9HotCxpWzzafsAuFLC2Cv1pk26dRxvlh7dw6acZ29HVlOuxAjlgl3dpAYzGkfGZPaKGzbLQSdmG+/Dg5qvQ8mHd7RRr2mSiOgGVlCC+Q/EL3oVU23TTrbj5y8zguJzSVmilLgrmpZBPaZErQgI5ZFnj+7gCbkBdHmP1FzsUn7aNI+nafXBaLNnC9qgAmSv9rmSxPkuZdEjUzrgBPICVsFbAc2RmxrilXkBH+HBKsPkTtJKH4B042N7RpiCBAAAAAASUVORK5CYII='
+    sg.set_options(icon=icon)
     theme = get_theme()
     if not theme:
         theme = sg.OFFICIAL_PYSIMPLEGUI_THEME
@@ -263,7 +264,7 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
         [sg.T('Python ver ' + sys.version, font='Default 8', pad=(0,0))]]
 
     # tab1 = sg.Tab('Output',old_right_col, k='-TAB1-',  expand_x=True, expand_y=True)
-    tab1 = sg.Tab('Output',old_right_col, k='-TAB1-',  )
+    tab1 = sg.Tab('Output',old_right_col, k='-TAB1-',)
 
 
     tab_group = sg.TabGroup([[tab1,]], k='-TABGROUP-', expand_x=True, expand_y=True, font='_ 8', tab_location='topleft')
@@ -279,7 +280,7 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
 
     # ----- Full layout -----
 
-    layout = [[sg.Image(data=icon, background_color='white'), sg.Text('PySimpleTest - Simple Python Testing', font='Any 20')],
+    layout = [[sg.Image(data=icon, background_color='white'), sg.Text('psgtest - Simple Python Testing', font='Any 20')],
               [sg.T('Testing Using Interpreter: ' + sg.user_settings_get_entry('-current interpreter-', ''), font='Default 12', k='-CURRENT INTERPRETER-'),
                sg.T('Interpreter path: ' + sg.user_settings_get_entry('-interpreter path-', ''), font='Default 12', k='-INTERPRETER PATH-')],
               [choose_folder_at_top, choose_interpreter_at_top],
@@ -289,7 +290,7 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
               ]
 
     # --------------------------------- Create Window ---------------------------------
-    window = sg.Window('PySimpleTest', layout, finalize=True, resizable=True, use_default_focus=False, right_click_menu=sg.MENU_RIGHT_CLICK_EDITME_VER_LOC_EXIT)
+    window = sg.Window('psgtest', layout, finalize=True, resizable=True, use_default_focus=False, right_click_menu=sg.MENU_RIGHT_CLICK_EDITME_VER_LOC_EXIT)
     # window.set_min_size(window.size)
 
 
@@ -376,6 +377,8 @@ def main():
             elif button == '-COPY-':
                 sg.clipboard_set(window[mline_key].get().rstrip())
                 sg.cprint('Copied to clipboard', key=mline_key)
+            elif button == '-CLOSE-':
+                window[event[1]].update(visible=False)
         elif event == '-THREAD-':
             thread_sp = values['-THREAD-'][0]
             line = values['-THREAD-'][1]
@@ -402,6 +405,9 @@ def main():
                     if mline_key not in sp_to_mline_dict.values():
                         tab = make_output_tab(file, mline_key, file)
                         window['-TABGROUP-'].add_tab(tab)
+                    else:
+                        if not window[file].visible:
+                            window[file].update(visible=True)
                     sp_to_mline_dict[sp] = mline_key
                     window[file].select()
                     # Let a thread handle getting all the output so that the rest of the GUI keep running
@@ -452,6 +458,11 @@ def main():
                 sg.cprint('EDITING: ', c='white on green')
                 sg.cprint(f'{file_list_dict[file]}', c='white on purple')
                 sg.execute_editor(file_list_dict[file])
+        elif event.startswith('Close'):
+            tab_key = event[event.index("::")+2:]
+            window[tab_key].update(visible=False)
+            # tab_to_close_key = values['-TABGROUP-']
+            # window[tab_to_close_key].update(visible=False)
         elif event == 'Version':
             sg.cprint(sg.get_versions(), c='white on green')
             sg.popup_scrolled(sg.get_versions(), non_blocking=True)
@@ -465,6 +476,4 @@ def main():
 
 
 if __name__ == '__main__':
-    icon = b'iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAABmJLR0QA/wD/AP+gvaeTAAADv0lEQVRogd2Zy0tVQRzHP1bkDa1NtCgtolQIKwlcCJYtFRRsX0S7+gPS9tqDFlmLHhi1lhSF8LHQDKQnLYOgiMRF5SbBV6SW3Ra/3+mcbuece+aeOcfsC8O5zuM739/M/GZ+M0I6KAf6gHlN/UBlSn1bQzkwA2Rz0gxQtoa6jNGHCB9EhJcBQ5r3YA11GWMeEe0d/d2aN2urkw22iELwXb9FPmU/UujfGnqQ0R9C/KUcGNa8njXU9RdG+duRTdOTuCL8ptsUWQscEFPLJksioHAhVgYiDWdPBTZnxNYSKwg2ZuSpBY7Yzm4Tzg6UVP1Q/Dc+kqQh6zbi9S6VKBGv1aVlE15hUSLedWFIlIh3XTi7I9BGCJQ6vCPcT3DE2+dT/59BIyJqSv+uAr7g7+wVWmdK8xpTVRqCDPAWEdXuyS9DHHtOUx+uEWjdrLbNpKI0Dy4igt4BxQbtNgNvtG1nArqMcARYAX4CDQW0b9C2K8q1JigGXiMj2h2Dp1s5XmM2o9ZwRQVMAltj8JQA75XrsgVdRqhDXkBWgeMW+Oo9fEct8EVCBtdJr1nk7cLdxbZY5A3EDeK/muRL15M2ogGZ/qQNWaWwXTASMshZkQWuJtWJcjvnUiIH5eWkO1AU4/rgRdvkNcihFbSrHAJGgGVNw0B1jP6OaV8rwOEYPH9gA/AKGaGbPuWHcO8f3jRHPGNuKc9LLF0HzijhR/wPvhEtH0WCwgpgDDeMLxTbgE/KczoGDwClwGclO+lTXgQsafl+T36F5n0j3mieUp5PqqVgXFKiZwGCvIZ4Q/RKgg1pAcaBRWBBfzcH9F8EPFeuSwVZAOwAviJOVxtSz7n5jSEGVAKPcB8fvHBCfr8UFMrXqoavqskYHdrBQJ561Yhj5wqbBQ546rVo/hJwHtipqQ13VoNmZkDLO0yNKMV9l6qPUL8acewlZDkN5hgB8Fj5zvu0d26L4wH89bhX5ZIIen7jnDZ8YdIoD5wteqdP2S4tmw9p/0LrnPUrDHoOatXvvWgaU8F9/baG1srBNGL9HotCxpWzzafsAuFLC2Cv1pk26dRxvlh7dw6acZ29HVlOuxAjlgl3dpAYzGkfGZPaKGzbLQSdmG+/Dg5qvQ8mHd7RRr2mSiOgGVlCC+Q/EL3oVU23TTrbj5y8zguJzSVmilLgrmpZBPaZErQgI5ZFnj+7gCbkBdHmP1FzsUn7aNI+nafXBaLNnC9qgAmSv9rmSxPkuZdEjUzrgBPICVsFbAc2RmxrilXkBH+HBKsPkTtJKH4B042N7RpiCBAAAAAASUVORK5CYII='
-    sg.set_options(icon=icon)
     main()
