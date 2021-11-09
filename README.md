@@ -3,7 +3,6 @@
   <img src="https://raw.githubusercontent.com/PySimpleGUI/PySimpleGUI/master/images/for_readme/Logo%20with%20text%20for%20GitHub%20Top.png" alt="Python GUIs for Humans">
   <h2 align="center">psgtest</h2>
   <h2 align="center">Simple Python Testing</h2>
-
 </p>
 
 Run your Python programs using the interpreter version of your choice, and display the output in a GUI window.
@@ -75,6 +74,15 @@ If you're running Windows, then you can use `psgshortcut` to make a shortcut to 
 You can find the location of psgtest after pip installing it by running psgtest, right clicking, and choosing "File Location".  You'll be shown where the `gui.py` file is located (the name of the psgtest program when pip installed).  It will usually be located in the `site-packages` folder in a folder named  `psgtest`.
 
 Instructions on how to make shortcuts to pip installed PySimpleGUI programs can be found in [description for psgshortcut on PyPI](https://pypi.org/project/psgshortcut/).
+
+
+## Release Notes
+
+### 1.8.0
+
+* Support for Python 3.4, 3.5, 3.11 added to settings 
+* Set the settings filename to be `psgtest` instead of the default filename. This is needed because the file for these psg projects on PyPI are all name gui.py and thus will have all point to the same settings file if not explicitly set
+* Only show configured interpreters in the Combo in main window     
 
 ## License
 
