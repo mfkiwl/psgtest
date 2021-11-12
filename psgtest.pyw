@@ -129,25 +129,32 @@ def settings_window():
     :rtype: (bool)
     """
 
-
-    try:    # in case running with old version of PySimpleGUI that doesn't have a global PSG settings path
+    try:  # in case running with old version of PySimpleGUI that doesn't have a global PSG settings path
         global_theme = sg.theme_global()
     except:
         global_theme = ''
 
 
     layout = [[sg.T('Program Settings', font='_ 25'), sg.Image(data=sg.EMOJI_BASE64_PONDER)],
-              [sg.Frame('Path to Tree of Test Programs', [[sg.Combo(sorted(sg.user_settings_get_entry('-folder names-', [])), default_value=sg.user_settings_get_entry('-test script folder-', get_demo_path()), size=(50, 1), key='-FOLDERNAME-'),
-               sg.FolderBrowse('Folder Browse', target='-FOLDERNAME-'), sg.B('Clear History')]], font='_ 14')],
-                  [sg.Frame('Python Interpreters (path to each python executible)', [[sg.Radio('', 1, k=interpreter_dict[k]+'-RADIO-'), sg.T(k, s=(5,1)), sg.In(sg.user_settings_get_entry(interpreter_dict[k], ''), k=interpreter_dict[k]), sg.FileBrowse()] for k in interpreter_dict], font='_ 14')],
+              [sg.Frame('Path to Tree of Test Programs', [[sg.Combo(sorted(sg.user_settings_get_entry('-folder names-', [])),
+                                                                    default_value=sg.user_settings_get_entry('-test script folder-', get_demo_path()),
+                                                                    size=(50, 1), key='-FOLDERNAME-'),
+                                                           sg.FolderBrowse('Folder Browse', target='-FOLDERNAME-'), sg.B('Clear History')]], font='_ 14')],
+              [sg.Frame('Python Interpreters (path to each python executible)', [[sg.Radio('', 1, k=interpreter_dict[k] + '-RADIO-'), sg.T(k, s=(5, 1)),
+                                                                                  sg.In(sg.user_settings_get_entry(interpreter_dict[k], ''),
+                                                                                        k=interpreter_dict[k]), sg.FileBrowse()] for k in interpreter_dict],
+                        font='_ 14')],
 
-              [sg.Frame('Theme',[[sg.T('Leave blank to use global default'), sg.T(global_theme)],
-              [sg.Combo(['']+sg.theme_list(),sg.user_settings_get_entry('-theme-', ''), readonly=True,  k='-THEME-')]], font='_ 14')],
+              [sg.Frame('Theme', [[sg.T('Leave blank to use global default'), sg.T(global_theme)],
+                                  [sg.Combo([''] + sg.theme_list(), sg.user_settings_get_entry('-theme-', ''), readonly=True, k='-THEME-')]], font='_ 14')],
 
-
-              [sg.Frame('Text Output Settings', [[sg.T('Font and size (e.g. Courier 10) for the output:'), sg.In(sg.user_settings_get_entry('-output font-', 'Courier 10'), k='-MLINE FONT-', s=(15,1))],
-                                                [sg.T('Output size Width x Height in chars'), sg.In(sg.user_settings_get_entry('-output width-', DEFAULT_OUTPUT_SIZE[0]), k='-MLINE WIDTH-', s=(4,1)), sg.T(' x '), sg.In(sg.user_settings_get_entry('-output height-', DEFAULT_OUTPUT_SIZE[1]), k='-MLINE HEIGHT-', s=(4,1))]], font='_ 14')],
-
+              [sg.Frame('Text Output Settings', [[sg.T('Font and size (e.g. Courier 10) for the output:'),
+                                                  sg.In(sg.user_settings_get_entry('-output font-', 'Courier 10'), k='-MLINE FONT-', s=(15, 1))],
+                                                 [sg.T('Output size Width x Height in chars'),
+                                                  sg.In(sg.user_settings_get_entry('-output width-', DEFAULT_OUTPUT_SIZE[0]), k='-MLINE WIDTH-', s=(4, 1)),
+                                                  sg.T(' x '),
+                                                  sg.In(sg.user_settings_get_entry('-output height-', DEFAULT_OUTPUT_SIZE[1]), k='-MLINE HEIGHT-', s=(4, 1))]],
+                        font='_ 14')],
 
               [sg.Frame('Double-click Will...', [[sg.R('Run', 2, sg.user_settings_get_entry('-dclick runs-', False), k='-DCLICK RUNS-'),
                                                   sg.R('Edit', 2, sg.user_settings_get_entry('-dclick edits-', False), k='-DCLICK EDITS-'),
@@ -159,7 +166,7 @@ def settings_window():
     window = sg.Window('Settings', layout, finalize=True)
 
     current_interpreter = sg.user_settings_get_entry('-current interpreter-', list(interpreter_dict.keys())[0])
-    window[interpreter_dict[current_interpreter]+'-RADIO-'].update(True)
+    window[interpreter_dict[current_interpreter] + '-RADIO-'].update(True)
     settings_changed = False
 
     while True:
@@ -184,7 +191,7 @@ def settings_window():
             sg.user_settings_set_entry('-output font-', values['-MLINE FONT-'])
             sg.user_settings_set_entry('-output width-', values['-MLINE WIDTH-'])
             sg.user_settings_set_entry('-output height-', values['-MLINE HEIGHT-'])
-            sg.user_settings_set_entry('-current interpreter-', *[k for k in interpreter_dict if values[interpreter_dict[k]+'-RADIO-']])
+            sg.user_settings_set_entry('-current interpreter-', *[k for k in interpreter_dict if values[interpreter_dict[k] + '-RADIO-']])
             sg.user_settings_set_entry('-interpreter path-', values[interpreter_dict[sg.user_settings_get_entry('-current interpreter-')]])
             settings_changed = True
             break
@@ -206,8 +213,13 @@ M  MMM  MMM  M `88888P8 dP   `YP `88888P'    MMMM  MMMM `88888P8 88Y8888'
 MMMMMMMMMMMMMM                               MMMMMMMMMM
 '''
 
+
 def make_output_tab(tab_text, key, tab_key):
-    tab = sg.Tab(tab_text, [[sg.Multiline(size=(sg.user_settings_get_entry('-output width-', DEFAULT_OUTPUT_SIZE[0]), sg.user_settings_get_entry('-output height-', DEFAULT_OUTPUT_SIZE[1])), expand_x=True, expand_y=True, write_only=True, key=key,  auto_refresh=True, font=sg.user_settings_get_entry('-output font-', 'Courier 10')),],[ sg.B('Copy To Clipboard', k=('-COPY-', key)), sg.B('Clear', k=('-CLEAR-', key)), sg.B('Close Tab', k=('-CLOSE-', tab_key))]], right_click_menu=['', [f'Close::{tab_key}', 'Exit']], k=tab_key,  )
+    tab = sg.Tab(tab_text, [[sg.Multiline(
+        size=(sg.user_settings_get_entry('-output width-', DEFAULT_OUTPUT_SIZE[0]), sg.user_settings_get_entry('-output height-', DEFAULT_OUTPUT_SIZE[1])),
+        expand_x=True, expand_y=True, write_only=True, key=key, auto_refresh=True, font=sg.user_settings_get_entry('-output font-', 'Courier 10')), ],
+                            [sg.B('Copy To Clipboard', k=('-COPY-', key)), sg.B('Clear', k=('-CLEAR-', key)), sg.B('Close Tab', k=('-CLOSE-', tab_key))]],
+                 right_click_menu=['', [f'Close::{tab_key}', 'Exit']], k=tab_key, )
 
     return tab
 
@@ -248,45 +260,60 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
 
     left_col = sg.Column([
         [sg.T('Test Cases (choose 1 or more)', font='_ 15')],
-        [sg.Listbox(values=get_file_list(), select_mode=sg.SELECT_MODE_EXTENDED, size=(50,20), bind_return_key=True, key='-DEMO LIST-', expand_x=True, expand_y=True)],
+        [sg.Listbox(values=get_file_list(), select_mode=sg.SELECT_MODE_EXTENDED, size=(50, 20), bind_return_key=True, key='-DEMO LIST-', expand_x=True,
+                    expand_y=True)],
         # [sg.Listbox(values=get_file_list(), select_mode=sg.SELECT_MODE_EXTENDED, size=(50,20), bind_return_key=True, key='-DEMO LIST-')],
         [sg.Text('Filter (F1):', tooltip=filter_tooltip), sg.Input(size=(25, 1), focus=True, enable_events=True, key='-FILTER-', tooltip=filter_tooltip),
-         sg.T(size=(15,1), k='-FILTER NUMBER-')],
+         sg.T(size=(15, 1), k='-FILTER NUMBER-')],
         [sg.Button('Run'), sg.B('Edit'), sg.B('Clear')],
         [sg.CBox('Show test program\'s output in this window', default=True, k='-SHOW OUTPUT-')],
     ], element_justification='l', expand_x=True, expand_y=True)
 
     output_tab_layout = [
-        [sg.Multiline(size=(sg.user_settings_get_entry('-output width-', DEFAULT_OUTPUT_SIZE[0]), sg.user_settings_get_entry('-output height-', DEFAULT_OUTPUT_SIZE[1])), write_only=True, key='-ML-', reroute_stdout=False, reroute_stderr=False, echo_stdout_stderr=True, reroute_cprint=True, auto_refresh=True, expand_x=True, expand_y=True, font=sg.user_settings_get_entry('-output font-', 'Courier 10'))],
+        [sg.Multiline(
+            size=(sg.user_settings_get_entry('-output width-', DEFAULT_OUTPUT_SIZE[0]), sg.user_settings_get_entry('-output height-', DEFAULT_OUTPUT_SIZE[1])),
+            write_only=True, key='-ML-', reroute_stdout=False, reroute_stderr=False, echo_stdout_stderr=True, reroute_cprint=True, auto_refresh=True,
+            expand_x=True, expand_y=True, font=sg.user_settings_get_entry('-output font-', 'Courier 10'))],
         [sg.B('Copy To Clipboard', key=('-COPY-', '-ML-')), sg.B('Clear', k=('-CLEAR-', '-ML-'))]]
 
     bottom_right = [
         [sg.Button('Edit Me (this program)'), sg.B('Settings'), sg.Button('Exit')],
-        [sg.T('PySimpleGUI ver ' + sg.version.split(' ')[0] + '  tkinter ver ' + sg.tclversion_detailed, font='Default 8', pad=(0,0))],
-        [sg.T('Python ver ' + sys.version, font='Default 8', pad=(0,0))]]
+        [sg.T('PySimpleGUI ver ' + sg.version.split(' ')[0] + '  tkinter ver ' + sg.tclversion_detailed, font='Default 8', pad=(0, 0))],
+        [sg.T('Python ver ' + sys.version, font='Default 8', pad=(0, 0))]]
 
     # tab1 = sg.Tab('Output',old_right_col, k='-TAB1-',  expand_x=True, expand_y=True)
     tab1 = sg.Tab('Output', output_tab_layout, k='-TAB1-', )
 
-
-    tab_group = sg.TabGroup([[tab1,]], k='-TABGROUP-', expand_x=True, expand_y=True, font='_ 8', tab_location='topleft')
+    tab_group = sg.TabGroup([[tab1, ]], k='-TABGROUP-', expand_x=True, expand_y=True, font='_ 8', tab_location='topleft')
     # tab_group = sg.TabGroup([[tab1,]], k='-TABGROUP-')
 
     right_col = [[tab_group]] + bottom_right
     choose_folder_at_top = sg.pin(sg.Column([[sg.T('Click settings to set top of your tree or choose a previously chosen folder'),
-                                       sg.Combo(sorted(sg.user_settings_get_entry('-folder names-', [])), default_value=sg.user_settings_get_entry('-test script folder-', ''), size=(50, 30), key='-FOLDERNAME-', enable_events=True, readonly=True)]], pad=(0,0), k='-FOLDER CHOOSE-', expand_x=True, expand_y=True))
+                                              sg.Combo(sorted(sg.user_settings_get_entry('-folder names-', [])),
+                                                       default_value=sg.user_settings_get_entry('-test script folder-', ''), size=(50, 30), key='-FOLDERNAME-',
+                                                       enable_events=True, readonly=True)]], pad=(0, 0), k='-FOLDER CHOOSE-', expand_x=True, expand_y=True))
 
     # interpreter_list = sorted(list(interpreter_dict.keys()))
     # interpreter_keys = sorted(list(interpreter_dict.values()))
     interpreter_list = []
     for key, value in interpreter_dict.items():
-        if  sg.user_settings_get_entry(value, ''):
+        if sg.user_settings_get_entry(value, ''):
             interpreter_list.append(key)
 
     interpreter_list = sorted(interpreter_list)
-
+    if len(interpreter_list) == 0:      # no interpreters found in settings file, so set one using the currently running version of Python
+        default_interpreter = f'{sys.version_info[0]}.{sys.version_info[1]}'
+        sg.user_settings_set_entry('-current interpreter-', default_interpreter)
+        sg.user_settings_set_entry('-interpreter path-', sys.executable)
+        key = interpreter_dict[default_interpreter]
+        sg.user_settings_set_entry(key, sys.executable)
+    else:
+        default_interpreter = interpreter_list[0]
     choose_interpreter_at_top = sg.pin(sg.Column([[sg.T('Launch using'),
-                                       sg.Combo(sorted(interpreter_list), default_value=sg.user_settings_get_entry('-current interpreter-', interpreter_list[0]), size=(4, len(interpreter_list)), key='-INTERPRETER TOP-', enable_events=True, readonly=True)]], pad=(0,0), k='-INTEPRETER CHOOSE-', expand_x=True, expand_y=True))
+                                                   sg.Combo(sorted(interpreter_list),
+                                                            default_value=sg.user_settings_get_entry('-current interpreter-', default_interpreter),
+                                                            size=(4, 10), key='-INTERPRETER TOP-', enable_events=True, readonly=True)]],
+                                                 pad=(0, 0), k='-INTEPRETER CHOOSE-', expand_x=True, expand_y=True))
 
     # ----- Full layout -----
 
@@ -295,14 +322,15 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
                sg.T('Interpreter path: ' + sg.user_settings_get_entry('-interpreter path-', ''), font='Default 12', k='-INTERPRETER PATH-')],
               [choose_folder_at_top, choose_interpreter_at_top],
               # [sg.Column([[left_col],[ lef_col_find_re]], element_justification='l',  expand_x=True, expand_y=True), sg.Column(right_col, element_justification='c', expand_x=True, expand_y=True)],
-              [sg.Pane([sg.Column([[left_col]], element_justification='l',  expand_x=True, expand_y=True), sg.Column(right_col, element_justification='c', expand_x=True, expand_y=True) ], orientation='h', relief=sg.RELIEF_SUNKEN, k='-PANE-', expand_x=True, expand_y=True), sg.Sizegrip()],
+              [sg.Pane([sg.Column([[left_col]], element_justification='l', expand_x=True, expand_y=True),
+                        sg.Column(right_col, element_justification='c', expand_x=True, expand_y=True)], orientation='h', relief=sg.RELIEF_SUNKEN, k='-PANE-',
+                       expand_x=True, expand_y=True), sg.Sizegrip()],
               # [sg.Pane([sg.Column([[left_col]], element_justification='l',  expand_x=True, expand_y=True), sg.Column(right_col, element_justification='c', expand_x=True, expand_y=True) ], orientation='h', relief=sg.RELIEF_SUNKEN, k='-PANE-'), sg.Sizegrip()],
               ]
 
     # --------------------------------- Create Window ---------------------------------
     window = sg.Window('psgtest', layout, finalize=True, resizable=True, use_default_focus=False, right_click_menu=sg.MENU_RIGHT_CLICK_EDITME_VER_LOC_EXIT)
     # window.set_min_size(window.size)
-
 
     # Rebild the dynamically created tabs
     if sp_to_mline_dict is not None:
@@ -358,7 +386,7 @@ def main():
     The main program that contains the event loop.
     It will call the make_window function to create the window.
     """
-    sg.user_settings_filename(filename='psgtest')
+    sg.user_settings_filename(filename='psgtest.json')
     os.environ['PYTHONUNBUFFERED'] = '1'
     file_list_dict = get_file_list_dict()
     file_list = get_file_list()
@@ -366,7 +394,7 @@ def main():
         window = make_window()
     except Exception as e:
         if sg.popup_yes_no('Exception making the Window... likely means a corrupt settings file.', f'Exception: {e}', 'Do you want to clear your settings?', title='Exception making window') == 'Yes':
-            sg.user_settings_delete_filename()
+            sg.user_settings_delete_filename(filename='psgtest.json')
             sg.popup_auto_close('Settings file deleted... please restart the program')
             exit()
         else:
@@ -384,7 +412,7 @@ def main():
         counter += 1
         if event in (sg.WINDOW_CLOSED, 'Exit'):
             break
-        if event == '-DEMO LIST-':           # if double clicked (used the bind return key parm)
+        if event == '-DEMO LIST-':  # if double clicked (used the bind return key parm)
             if sg.user_settings_get_entry('-dclick runs-'):
                 event = 'Run'
             elif sg.user_settings_get_entry('-dclick edits-'):
@@ -418,7 +446,7 @@ def main():
                 sg.cprint('')
                 for file in values['-DEMO LIST-']:
                     file_to_run = str(file_list_dict[file])
-                    sg.cprint(file_to_run,text_color='white', background_color='purple')
+                    sg.cprint(file_to_run, text_color='white', background_color='purple')
                     pipe_output = values['-SHOW OUTPUT-']
                     sp = sg.execute_command_subprocess(interpreter_path, f'"{file_to_run}"', pipe_output=pipe_output)
                     sp_to_filename[sp] = file
@@ -433,7 +461,7 @@ def main():
                     window[file].select()
                     # Let a thread handle getting all the output so that the rest of the GUI keep running
                     if pipe_output:
-                        threading.Thread(target=the_thread, args=(window,sp), daemon=True).start()
+                        threading.Thread(target=the_thread, args=(window, sp), daemon=True).start()
             else:
                 sg.cprint('*** No valid interpreter has been chosen ***', c='white on red')
         elif event.startswith('Edit Me'):
@@ -480,7 +508,7 @@ def main():
                 sg.cprint(f'{file_list_dict[file]}', c='white on purple')
                 sg.execute_editor(file_list_dict[file])
         elif event.startswith('Close'):
-            tab_key = event[event.index("::")+2:]
+            tab_key = event[event.index("::") + 2:]
             window[tab_key].update(visible=False)
             # tab_to_close_key = values['-TABGROUP-']
             # window[tab_to_close_key].update(visible=False)

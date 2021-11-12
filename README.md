@@ -78,6 +78,12 @@ Instructions on how to make shortcuts to pip installed PySimpleGUI programs can 
 
 ## Release Notes
 
+### 1.9.0
+
+* Fix for exception when no settings are initially found.  Oy.... bad bug to have released reight away
+* Will create a settings file with the currently running version of Python if one is not found
+* Added minimum of 4.55.1 requirement for PySimpleGUI to the setup.py file
+
 ### 1.8.0
 
 * Support for Python 3.4, 3.5, 3.11 added to settings 
