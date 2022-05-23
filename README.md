@@ -78,6 +78,11 @@ Instructions on how to make shortcuts to pip installed PySimpleGUI programs can 
 
 ## Release Notes
 
+
+### 1.10.0
+
+* Regression Test Feature - run large sets of tests.  Will keep tabs open that have failures and show an error popup
+
 ### 1.9.0
 
 * Fix for exception when no settings are initially found.  Oy.... bad bug to have released reight away

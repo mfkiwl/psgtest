@@ -1,9 +1,11 @@
-import os.path
+import os
 import sys
 import threading
 import subprocess
 import PySimpleGUI as sg
-
+import time
+import psutil
+import signal
 
 """
                              dP                       dP   
@@ -15,7 +17,7 @@ import PySimpleGUI as sg
 88                     .88                                 
 dP                 d8888P
 
-    Copyright 2021 PySimpleGUI.org
+    Copyright 2021, 2022 PySimpleGUI.org
 """
 
 
@@ -257,6 +259,8 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
 
     filter_tooltip = "Filter files\nEnter a string in box to narrow down the list of files.\nFile list will update with list of files with string in filename."
 
+    regression_frame_layout = [[sg.CBox('Kill test after', default=False, k='-REGRESSION TEST-'), sg.Input(15, s=4, k='-REGRESSION SECONDS-'), sg.Text('seconds (regression tests)')],
+                               [sg.T('Run'), sg.I(5, s=4, k='-REGRESSION BLOCK SIZE-'), sg.T('programs at a time'), sg.B('Run Regression')]]
 
     left_col = sg.Column([
         [sg.T('Test Cases (choose 1 or more)', font='_ 15')],
@@ -265,8 +269,9 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
         # [sg.Listbox(values=get_file_list(), select_mode=sg.SELECT_MODE_EXTENDED, size=(50,20), bind_return_key=True, key='-DEMO LIST-')],
         [sg.Text('Filter (F1):', tooltip=filter_tooltip), sg.Input(size=(25, 1), focus=True, enable_events=True, key='-FILTER-', tooltip=filter_tooltip),
          sg.T(size=(15, 1), k='-FILTER NUMBER-')],
-        [sg.Button('Run'), sg.B('Edit'), sg.B('Clear')],
+        [sg.Button('Run'), sg.B('Edit'), sg.B('Clear'), ],
         [sg.CBox('Show test program\'s output in this window', default=True, k='-SHOW OUTPUT-')],
+        [sg.Frame('Regression Testing', regression_frame_layout)],
     ], element_justification='l', expand_x=True, expand_y=True)
 
     output_tab_layout = [
@@ -280,6 +285,7 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
         [sg.Button('Edit Me (this program)'), sg.B('Settings'), sg.Button('Exit')],
         [sg.T('PySimpleGUI ver ' + sg.version.split(' ')[0] + '  tkinter ver ' + sg.tclversion_detailed, font='Default 8', pad=(0, 0))],
         [sg.T('Python ver ' + sys.version, font='Default 8', pad=(0, 0))]]
+
 
     # tab1 = sg.Tab('Output',old_right_col, k='-TAB1-',  expand_x=True, expand_y=True)
     tab1 = sg.Tab('Output', output_tab_layout, k='-TAB1-', )
@@ -370,6 +376,56 @@ def the_thread(window: sg.Window, sp: subprocess.Popen):
         window.write_event_value('-THREAD-', (sp, oline))
     window.write_event_value('-THREAD-', (sp, '===THEAD DONE==='))
 
+def timer_thread(window: sg.Window, sp: subprocess.Popen, seconds):
+    """
+    The thread that's used to run the subprocess so that the GUI can continue and the stdout/stderror is collected
+
+    :param window:
+    :param sp:
+    :param seconds:
+    :return:
+    """
+
+    time.sleep(seconds)
+    window.write_event_value('-TIMER THREAD-', (sp, '===KILL THREAD==='))
+
+
+def kill_proc(pid, sig=signal.SIGTERM, include_parent=True,
+                   timeout=None, on_terminate=None):
+    """Kill a process tree (including grandchildren) with signal
+    "sig" and return a (gone, still_alive) tuple.
+    "on_terminate", if specified, is a callabck function which is
+    called as soon as a child terminates.
+    """
+    if pid == os.getpid():
+        raise RuntimeError("I refuse to kill myself")
+    parent = psutil.Process(pid)
+    parent.send_signal(sig)
+    sg.Print(f'tried killing {pid} with parent {parent}')
+
+def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
+                   timeout=None, on_terminate=None):
+    """Kill a process tree (including grandchildren) with signal
+    "sig" and return a (gone, still_alive) tuple.
+    "on_terminate", if specified, is a callabck function which is
+    called as soon as a child terminates.
+    """
+    try:
+        if pid == os.getpid():
+            raise RuntimeError("I refuse to kill myself")
+        parent = psutil.Process(pid)
+        children = parent.children(recursive=True)
+        if include_parent:
+            children.append(parent)
+        for p in children:
+            p.send_signal(sig)
+        gone, alive = psutil.wait_procs(children, timeout=timeout,
+                                        callback=on_terminate)
+    except:
+        return (None, None)
+    return (gone, alive)
+
+
 
 '''
 M"""""`'"""`YM          oo          
@@ -386,6 +442,45 @@ def main():
     The main program that contains the event loop.
     It will call the make_window function to create the window.
     """
+
+    def start_batch(list_of_programs):
+        current_interpreter = sg.user_settings_get_entry('-current interpreter-')
+        if current_interpreter != values['-INTERPRETER TOP-']:
+            current_interpreter = values['-INTERPRETER TOP-']
+        interpreter_path = sg.user_settings_get_entry(interpreter_dict[current_interpreter])
+        # interpreter_path = sg.user_settings_get_entry('-interpreter path-', '')
+        if interpreter_path:
+            sg.cprint(f"Running using {current_interpreter}....", c='white on green', end='')
+            sg.cprint('')
+        else:
+            sg.cprint('*** No valid interpreter has been chosen ***', c='white on red')
+            return
+        for file in list_of_programs:
+            file_to_run = str(file_list_dict[file])
+            sg.cprint(file_to_run, text_color='white', background_color='purple')
+            pipe_output = values['-SHOW OUTPUT-']
+            sp = sg.execute_command_subprocess(interpreter_path, f'"{file_to_run}"', pipe_output=pipe_output)
+            # sg.Print(sg.obj_to_string_single_obj(sp))
+            sp_to_filename[sp] = file
+            mline_key = f'{file}-MLINE-'
+            if mline_key not in sp_to_mline_dict.values():
+                tab = make_output_tab(file, mline_key, file)
+                window['-TABGROUP-'].add_tab(tab)
+            else:
+                if not window[file].visible:
+                    window[file].update(visible=True)
+            sp_to_mline_dict[sp] = mline_key
+            window[file].select()
+            # Let a thread handle getting all the output so that the rest of the GUI keep running
+            if pipe_output:
+                threading.Thread(target=the_thread, args=(window, sp), daemon=True).start()
+                if values['-REGRESSION TEST-']:
+                    try:
+                        seconds = float(values['-REGRESSION SECONDS-'])
+                    except:
+                        seconds = 15
+                    threading.Thread(target=timer_thread, args=(window, sp, seconds), daemon=True).start()
+
     sg.user_settings_filename(filename='psgtest.json')
     os.environ['PYTHONUNBUFFERED'] = '1'
     file_list_dict = get_file_list_dict()
@@ -404,7 +499,8 @@ def main():
     sp_to_mline_dict = {}
     sp_to_filename = {}
     counter = 0
-
+    dont_close_tab = {}
+    regression_programs = []
     while True:
         event, values = window.read()
         # print(event, values)
@@ -428,42 +524,41 @@ def main():
                 sg.cprint('Copied to clipboard', key=mline_key)
             elif button == '-CLOSE-':
                 window[event[1]].update(visible=False)
-        elif event == '-THREAD-':
+        elif event == '-TIMER THREAD-':
+            thread_sp = values['-TIMER THREAD-'][0]
+            sg.cprint(f'killing pid {thread_sp.pid}')
+            kill_proc_tree(thread_sp.pid)
+            file = sp_to_filename[thread_sp]
+            if not dont_close_tab.get(file, False):
+                window[file].update(visible=False)
+        elif event == '-THREAD-':                   # received message from thread to display
             thread_sp = values['-THREAD-'][0]
             line = values['-THREAD-'][1]
             sg.cprint(line, key=sp_to_mline_dict[thread_sp])
+            if 'Traceback' in line:
+                sg.popup_error(f'Error during running {sp_to_filename[thread_sp]}', non_blocking=True)
+                dont_close_tab[sp_to_filename[thread_sp]] = True
             if line == '===THEAD DONE===':
                 sg.cprint(f'{sp_to_filename[thread_sp]}', c='white on purple')
                 sg.cprint(f'Completed', c='white on green')
+                if regression_programs:
+                    next_program = regression_programs[0]
+                    start_batch((next_program,))
+                    del regression_programs[0]
         elif event == 'Run':
-            current_interpreter = sg.user_settings_get_entry('-current interpreter-')
-            if current_interpreter != values['-INTERPRETER TOP-']:
-                current_interpreter = values['-INTERPRETER TOP-']
-            interpreter_path = sg.user_settings_get_entry(interpreter_dict[current_interpreter])
-            # interpreter_path = sg.user_settings_get_entry('-interpreter path-', '')
-            if interpreter_path:
-                sg.cprint(f"Running using {current_interpreter}....", c='white on green', end='')
-                sg.cprint('')
-                for file in values['-DEMO LIST-']:
-                    file_to_run = str(file_list_dict[file])
-                    sg.cprint(file_to_run, text_color='white', background_color='purple')
-                    pipe_output = values['-SHOW OUTPUT-']
-                    sp = sg.execute_command_subprocess(interpreter_path, f'"{file_to_run}"', pipe_output=pipe_output)
-                    sp_to_filename[sp] = file
-                    mline_key = f'{file}-MLINE-'
-                    if mline_key not in sp_to_mline_dict.values():
-                        tab = make_output_tab(file, mline_key, file)
-                        window['-TABGROUP-'].add_tab(tab)
-                    else:
-                        if not window[file].visible:
-                            window[file].update(visible=True)
-                    sp_to_mline_dict[sp] = mline_key
-                    window[file].select()
-                    # Let a thread handle getting all the output so that the rest of the GUI keep running
-                    if pipe_output:
-                        threading.Thread(target=the_thread, args=(window, sp), daemon=True).start()
-            else:
-                sg.cprint('*** No valid interpreter has been chosen ***', c='white on red')
+            start_batch(values['-DEMO LIST-'])
+            #
+            # current_interpreter = sg.user_settings_get_entry('-current interpreter-')
+            # if current_interpreter != values['-INTERPRETER TOP-']:
+            #     current_interpreter = values['-INTERPRETER TOP-']
+            # interpreter_path = sg.user_settings_get_entry(interpreter_dict[current_interpreter])
+            # # interpreter_path = sg.user_settings_get_entry('-interpreter path-', '')
+            # if interpreter_path:
+            #     sg.cprint(f"Running using {current_interpreter}....", c='white on green', end='')
+            #     sg.cprint('')
+            #     start_batch(values['-DEMO LIST-'])
+            # else:
+            #     sg.cprint('*** No valid interpreter has been chosen ***', c='white on red')
         elif event.startswith('Edit Me'):
             sg.execute_editor(__file__)
         elif event == 'Version':
@@ -519,6 +614,14 @@ def main():
             sg.execute_editor(__file__)
         elif event == 'File Location':
             sg.cprint('This Python file is:', __file__, c='white on green')
+        elif event == 'Run Regression':
+            window['-REGRESSION TEST-'].update(True)
+            values['-REGRESSION TEST-'] = True
+            regression_programs = values['-DEMO LIST-']
+            # start the first batch
+            num_to_run = int(values['-REGRESSION BLOCK SIZE-'])
+            start_batch(regression_programs[:num_to_run])
+            del regression_programs[:num_to_run]
     window.close()
 
 
