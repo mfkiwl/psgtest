@@ -1,4 +1,4 @@
-import os
+import os.path
 import sys
 import threading
 import subprocess
@@ -6,6 +6,8 @@ import PySimpleGUI as sg
 import time
 import psutil
 import signal
+
+version = '1.11 Released 9-Jun-2022'
 
 """
                              dP                       dP   
@@ -269,6 +271,7 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
         # [sg.Listbox(values=get_file_list(), select_mode=sg.SELECT_MODE_EXTENDED, size=(50,20), bind_return_key=True, key='-DEMO LIST-')],
         [sg.Text('Filter (F1):', tooltip=filter_tooltip), sg.Input(size=(25, 1), focus=True, enable_events=True, key='-FILTER-', tooltip=filter_tooltip),
          sg.T(size=(15, 1), k='-FILTER NUMBER-')],
+        [sg.T('Run a single file:'), sg.Input(size=35, k='-SINGLE FILE-')],
         [sg.Button('Run'), sg.B('Edit'), sg.B('Clear'), ],
         [sg.CBox('Show test program\'s output in this window', default=True, k='-SHOW OUTPUT-')],
         [sg.Frame('Regression Testing', regression_frame_layout)],
@@ -283,7 +286,7 @@ def make_window(sp_to_mline_dict=None, sp_to_filename=None):
 
     bottom_right = [
         [sg.Button('Edit Me (this program)'), sg.B('Settings'), sg.Button('Exit')],
-        [sg.T('PySimpleGUI ver ' + sg.version.split(' ')[0] + '  tkinter ver ' + sg.tclversion_detailed, font='Default 8', pad=(0, 0))],
+        [sg.T('psgtest ver ' + version + '   PySimpleGUI ver ' + sg.version.split(' ')[0] + '  tkinter ver ' + sg.tclversion_detailed, font='Default 8', pad=(0, 0))],
         [sg.T('Python ver ' + sys.version, font='Default 8', pad=(0, 0))]]
 
 
@@ -456,7 +459,10 @@ def main():
             sg.cprint('*** No valid interpreter has been chosen ***', c='white on red')
             return
         for file in list_of_programs:
-            file_to_run = str(file_list_dict[file])
+            if file not in file_list_dict:
+                file_to_run = file
+            else:
+                file_to_run = str(file_list_dict[file])
             sg.cprint(file_to_run, text_color='white', background_color='purple')
             pipe_output = values['-SHOW OUTPUT-']
             sp = sg.execute_command_subprocess(interpreter_path, f'"{file_to_run}"', pipe_output=pipe_output)
@@ -546,7 +552,10 @@ def main():
                     start_batch((next_program,))
                     del regression_programs[0]
         elif event == 'Run':
-            start_batch(values['-DEMO LIST-'])
+            if values['-SINGLE FILE-']:
+                start_batch([values['-SINGLE FILE-']])
+            else:
+                start_batch(values['-DEMO LIST-'])
             #
             # current_interpreter = sg.user_settings_get_entry('-current interpreter-')
             # if current_interpreter != values['-INTERPRETER TOP-']:
